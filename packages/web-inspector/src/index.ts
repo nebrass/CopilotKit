@@ -4355,7 +4355,7 @@ ${this.announcementMarkdown}</pre
               .value=${this.emitterEventType}
               @change=${(e: Event) => {
                 this.emitterEventType = (e.target as HTMLSelectElement).value as DevtoolsEventType;
-                this.emitterJsonError = null;
+                this.revalidateEmitterJson();
                 this.requestUpdate();
               }}
             >
@@ -4563,6 +4563,22 @@ ${this.announcementMarkdown}</pre
       this.emitterJsonError = null;
     } catch (err) {
       this.emitterJsonError = `Invalid JSON: ${(err as Error).message}`;
+    }
+  }
+
+  private revalidateEmitterJson(): void {
+    switch (this.emitterEventType) {
+      case "tool-call":
+        this.validateJson(this.emitterArgs);
+        break;
+      case "state-snapshot":
+        this.validateJson(this.emitterStateJson);
+        break;
+      case "custom-event":
+        this.validateJson(this.emitterCustomValue);
+        break;
+      default:
+        this.emitterJsonError = null;
     }
   }
 
