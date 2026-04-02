@@ -42,6 +42,7 @@
     "@copilotkit/sqlite-runner": "1.54.0",
     "@copilotkit/typescript-config": "1.54.0",
     "@copilotkit/voice": "1.54.0",
+    "@copilotkit/devtools-client": "1.54.0",
     "@copilotkit/web-inspector": "1.54.0",
     "@copilotkitnext/angular": "1.54.1-next.6",
     "react-router-example": "0.1.0"
