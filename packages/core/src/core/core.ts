@@ -262,7 +262,10 @@ export class CopilotKitCore {
     try {
       this.devtoolsListener.initialize();
     } catch (err) {
-      console.warn("[CopilotKit] DevtoolsListener failed to initialize — devtools will be unavailable:", err);
+      console.warn(
+        "[CopilotKit] DevtoolsListener failed to initialize — devtools will be unavailable:",
+        err,
+      );
     }
 
     this.agentRegistry.setRuntimeTransport(runtimeTransport);
