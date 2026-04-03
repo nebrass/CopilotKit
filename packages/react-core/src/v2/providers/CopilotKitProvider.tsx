@@ -37,6 +37,7 @@ import type {
 import type { ReactFrontendTool } from "../types/frontend-tool";
 import type { ReactHumanInTheLoop } from "../types/human-in-the-loop";
 import type { ReactCustomMessageRenderer } from "../types/react-custom-message-renderer";
+import { globalThreadCloneMap } from "../hooks/use-agent";
 
 const HEADER_NAME = "X-CopilotCloud-Public-Api-Key";
 const COPILOT_CLOUD_CHAT_URL = "https://api.cloud.copilotkit.ai/copilotkit/v1";
@@ -398,6 +399,12 @@ export const CopilotKitProvider: React.FC<CopilotKitProviderProps> = ({
       renderToolCalls: allRenderToolCalls,
       renderActivityMessages: allActivityRenderers,
       renderCustomMessages: renderCustomMessagesList,
+    });
+
+    // Register thread clone resolver so devtools events reach thread-scoped agents
+    copilotkitRef.current.setThreadCloneResolver((registryAgent) => {
+      const byThread = globalThreadCloneMap.get(registryAgent);
+      return byThread ? Array.from(byThread.values()) : [];
     });
   }
   const copilotkit = copilotkitRef.current;
