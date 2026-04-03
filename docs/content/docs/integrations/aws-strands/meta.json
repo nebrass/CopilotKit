@@ -12,6 +12,8 @@
     "frontend-tools", "shared-state",
     "---Backend---",
     "copilot-runtime", "ag-ui",
+    "---Deploy---",
+    "deploy-agentcore",
     "---Premium Features---",
     "...premium",
     "---Troubleshooting---",
