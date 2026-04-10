@@ -167,9 +167,12 @@ export interface CopilotKitCoreSubscription {
 
 /**
  * The subset of `AgentSubscriber` callbacks accepted by
- * {@link CopilotKitCore.subscribeToAgent}. Only notification and lifecycle
- * callbacks are supported — event handlers that return `AgentStateMutation`
- * should use `agent.subscribe()` directly.
+ * {@link CopilotKitCore.subscribeToAgent}. Only high-level notification
+ * and lifecycle callbacks are supported. AG-UI event handlers (e.g.
+ * `onEvent`, `onToolCallStartEvent`) are excluded because their
+ * `AgentStateMutation` return values would be silently discarded by the
+ * error-protection wrapper. Use `agent.subscribe()` directly when
+ * mutation semantics are needed.
  */
 export type SubscribeToAgentSubscriber = Pick<
   AgentSubscriber,
@@ -393,8 +396,8 @@ export class CopilotKitCore {
   /**
    * Default throttle interval (ms) used by `subscribeToAgent()` when the
    * caller does not specify an explicit `throttleMs`. A value of `0` means
-   * no throttling. Invalid values (negative, non-finite) are rejected by
-   * the setter.
+   * no throttling. Invalid values (negative, non-finite) are logged as
+   * errors and ignored, preserving the current value.
    */
   get defaultThrottleMs(): number | undefined {
     return this._defaultThrottleMs;
@@ -581,9 +584,11 @@ export class CopilotKitCore {
    * Every callback is wrapped with error protection so a throwing or
    * rejecting callback cannot corrupt the agent's notification loop.
    *
-   * Only notification and lifecycle callbacks are accepted. Event handlers
-   * that return `AgentStateMutation` (e.g. `onEvent`, `onToolCallStartEvent`)
-   * should use `agent.subscribe()` directly to preserve mutation semantics.
+   * Only high-level notification and lifecycle callbacks are accepted.
+   * AG-UI event handlers (e.g. `onEvent`, `onToolCallStartEvent`) are
+   * excluded because their `AgentStateMutation` return values would be
+   * silently discarded by the error-protection wrapper. Use
+   * `agent.subscribe()` directly when mutation semantics are needed.
    *
    * The returned `unsubscribe()` clears any pending trailing timer.
    */
@@ -632,14 +637,25 @@ export class CopilotKitCore {
       }
     };
 
-    // Wrap every callback in the subscriber with safeCall so errors in
-    // any callback cannot corrupt the agent's notification loop.
+    // Keys accepted by subscribeToAgent — used by guardAll to filter out
+    // any extra properties that slip through at runtime (e.g. from JS
+    // consumers or `as any` casts), preventing silent mutation loss.
+    const ALLOWED_KEYS: ReadonlySet<string> = new Set([
+      "onMessagesChanged",
+      "onStateChanged",
+      "onRunInitialized",
+      "onRunFinalized",
+      "onRunFailed",
+    ]);
+
+    // Wrap every allowed callback in the subscriber with safeCall so errors
+    // in any callback cannot corrupt the agent's notification loop.
     const guardAll = (
       sub: SubscribeToAgentSubscriber,
     ): SubscribeToAgentSubscriber => {
       const guarded: SubscribeToAgentSubscriber = {};
       for (const [key, value] of Object.entries(sub)) {
-        if (typeof value === "function") {
+        if (typeof value === "function" && ALLOWED_KEYS.has(key)) {
           (guarded as any)[key] = (...args: any[]) =>
             safeCall(key, value as (...a: any[]) => any, ...args);
         }
@@ -669,12 +685,12 @@ export class CopilotKitCore {
       | null = null;
 
     const flushPending = () => {
-      if (subscriber.onMessagesChanged && latestMessagesParams) {
+      if (active && subscriber.onMessagesChanged && latestMessagesParams) {
         const params = latestMessagesParams;
         latestMessagesParams = null;
         safeCall("onMessagesChanged", subscriber.onMessagesChanged, params);
       }
-      if (subscriber.onStateChanged && latestStateParams) {
+      if (active && subscriber.onStateChanged && latestStateParams) {
         const params = latestStateParams;
         latestStateParams = null;
         safeCall("onStateChanged", subscriber.onStateChanged, params);
