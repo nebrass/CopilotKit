@@ -199,7 +199,7 @@ class LangGraphAGUIAgent(LangGraphAgent):
             **merged_state,
             'copilotkit': {
                 'actions': agui_properties.get('tools', []),
-                'context': agui_properties.get('context', [])
+                'context': [c.model_dump() if hasattr(c, 'model_dump') else c for c in agui_properties.get('context', [])]
             },
         }
 
