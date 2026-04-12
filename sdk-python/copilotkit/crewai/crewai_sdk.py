@@ -15,6 +15,7 @@ from litellm.types.utils import (
   Function as LiteLLMFunction
 )
 from litellm.litellm_core_utils.streaming_handler import CustomStreamWrapper
+from crewai.flow.flow import FlowState, Flow
 try:
     from crewai.utilities.events.flow_events import (
         FlowEvent as CrewAIFlowEvent,
