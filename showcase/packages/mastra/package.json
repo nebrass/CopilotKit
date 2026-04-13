@@ -21,7 +21,7 @@
     "@mastra/memory": "beta",
     "libsql": "^0.5.22",
     "mastra": "beta",
-    "next": "^15.0.0",
+    "next": "^15.5.15",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^3.24.0"

@@ -24,7 +24,7 @@ COPY src/main/resources/ src/main/resources/
 RUN mvn package -DskipTests -B
 
 # Stage 2: Build Next.js frontend
-FROM node:20-slim AS frontend
+FROM node:20.19-slim AS frontend
 WORKDIR /app
 COPY package.json ./
 RUN npm install

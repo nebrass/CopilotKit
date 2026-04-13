@@ -1,5 +1,5 @@
 # Stage 1: Build Next.js frontend
-FROM node:20-slim AS frontend
+FROM node:20.19-slim AS frontend
 WORKDIR /app
 COPY package.json ./
 RUN npm install

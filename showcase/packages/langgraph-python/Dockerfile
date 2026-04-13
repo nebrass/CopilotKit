@@ -1,5 +1,5 @@
 # Stage 1: Build Next.js frontend
-FROM node:20-slim AS frontend
+FROM node:20.19-slim AS frontend
 WORKDIR /app
 RUN corepack enable
 COPY package.json ./
@@ -8,7 +8,7 @@ COPY . .
 RUN pnpm build
 
 # Stage 2: Production image with Node.js + Python
-FROM python:3.12-slim AS runner
+FROM python:3.12.11-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
