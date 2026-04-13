@@ -161,13 +161,13 @@ export interface CopilotKitCoreSubscriber {
   }) => void | Promise<void>;
 }
 
-// Subscription object returned by subscribe() and subscribeToAgent()
+// Subscription object returned by subscribe() and subscribeToAgentWithOptions()
 export interface CopilotKitCoreSubscription {
   unsubscribe: () => void;
 }
 
 /**
- * The callback keys accepted by {@link CopilotKitCore.subscribeToAgent}.
+ * The callback keys accepted by {@link CopilotKitCore.subscribeToAgentWithOptions}.
  * This tuple is the single source of truth — both the
  * `SubscribeToAgentSubscriber` type and the runtime `ALLOWED_KEYS` set
  * are derived from it, so they cannot desynchronise.
@@ -189,7 +189,7 @@ const ALLOWED_KEYS: ReadonlySet<(typeof SUBSCRIBE_TO_AGENT_KEYS)[number]> =
 
 /**
  * The subset of `AgentSubscriber` callbacks accepted by
- * {@link CopilotKitCore.subscribeToAgent}. Only the five callbacks listed
+ * {@link CopilotKitCore.subscribeToAgentWithOptions}. Only the five callbacks listed
  * in {@link SUBSCRIBE_TO_AGENT_KEYS} are supported: `onMessagesChanged`,
  * `onStateChanged`, and the three run lifecycle callbacks
  * (`onRunInitialized`, `onRunFinalized`, `onRunFailed`).
@@ -218,7 +218,7 @@ export type SubscribeToAgentSubscriber = Pick<
   (typeof SUBSCRIBE_TO_AGENT_KEYS)[number]
 >;
 
-/** Options for {@link CopilotKitCore.subscribeToAgent}. */
+/** Options for {@link CopilotKitCore.subscribeToAgentWithOptions}. */
 export interface SubscribeToAgentOptions {
   /**
    * Throttle interval (ms) for `onMessagesChanged` / `onStateChanged`.
@@ -429,7 +429,7 @@ export class CopilotKitCore {
   }
 
   /**
-   * Default throttle interval (ms) used by `subscribeToAgent()` when the
+   * Default throttle interval (ms) used by `subscribeToAgentWithOptions()` when the
    * caller does not specify an explicit `throttleMs`. `undefined` means no
    * default is configured; `0` means no throttling.
    */
@@ -438,7 +438,7 @@ export class CopilotKitCore {
   }
 
   /**
-   * Set the default throttle interval (ms) for `subscribeToAgent()`.
+   * Set the default throttle interval (ms) for `subscribeToAgentWithOptions()`.
    *
    * Accepts a non-negative finite number or `undefined` (to clear the
    * default). Invalid values (NaN, Infinity, negative) are logged as
@@ -639,7 +639,7 @@ export class CopilotKitCore {
    *
    * The returned `unsubscribe()` clears any pending trailing timer.
    */
-  subscribeToAgent(
+  subscribeToAgentWithOptions(
     agent: AbstractAgent,
     subscriber: SubscribeToAgentSubscriber,
     options?: SubscribeToAgentOptions,
@@ -651,18 +651,18 @@ export class CopilotKitCore {
       const source =
         options?.throttleMs !== undefined ? "throttleMs" : "defaultThrottleMs";
       console.error(
-        `CopilotKitCore.subscribeToAgent: ${source} must be a non-negative finite number, ` +
+        `CopilotKitCore.subscribeToAgentWithOptions: ${source} must be a non-negative finite number, ` +
           `got ${resolved}. Falling back to unthrottled.`,
       );
       this.emitError({
         error: new Error(
-          `subscribeToAgent: invalid ${source} (${resolved}), falling back to unthrottled`,
+          `subscribeToAgentWithOptions: invalid ${source} (${resolved}), falling back to unthrottled`,
         ),
         code: CopilotKitCoreErrorCode.SUBSCRIBER_CALLBACK_FAILED,
         context: { agentId: agent.agentId, source, value: resolved },
       }).catch((emitErr: unknown) => {
         console.error(
-          `CopilotKitCore.subscribeToAgent[${agent.agentId || "(unknown agent)"}]: emitError itself failed:`,
+          `CopilotKitCore.subscribeToAgentWithOptions[${agent.agentId || "(unknown agent)"}]: emitError itself failed:`,
           emitErr,
         );
       });
@@ -689,7 +689,7 @@ export class CopilotKitCore {
       ...args: Parameters<F>
     ): any => {
       const reportError = (err: unknown, verb: string) => {
-        const message = `CopilotKitCore.subscribeToAgent[${agentLabel}]: ${label} callback ${verb}:`;
+        const message = `CopilotKitCore.subscribeToAgentWithOptions[${agentLabel}]: ${label} callback ${verb}:`;
         console.error(message, err);
         this.emitError({
           error: err instanceof Error ? err : new Error(String(err)),
@@ -697,7 +697,7 @@ export class CopilotKitCore {
           context: { agentId: agent.agentId, callback: label },
         }).catch((emitErr: unknown) => {
           console.error(
-            `CopilotKitCore.subscribeToAgent[${agentLabel}]: emitError itself failed:`,
+            `CopilotKitCore.subscribeToAgentWithOptions[${agentLabel}]: emitError itself failed:`,
             emitErr,
           );
         });
@@ -741,7 +741,7 @@ export class CopilotKitCore {
         !ALLOWED_KEYS.has(key as keyof SubscribeToAgentSubscriber)
       ) {
         const message =
-          `CopilotKitCore.subscribeToAgent[${agentLabel}]: callback "${key}" is not supported ` +
+          `CopilotKitCore.subscribeToAgentWithOptions[${agentLabel}]: callback "${key}" is not supported ` +
           `and was dropped. Supported callbacks: ${Array.from(ALLOWED_KEYS).join(", ")}. ` +
           `Use agent.subscribe() directly for event handlers and per-item notifications.`;
         console.warn(message);
@@ -751,7 +751,7 @@ export class CopilotKitCore {
           context: { agentId: agent.agentId, droppedCallback: key },
         }).catch((emitErr: unknown) => {
           console.error(
-            `CopilotKitCore.subscribeToAgent[${agentLabel}]: emitError itself failed:`,
+            `CopilotKitCore.subscribeToAgentWithOptions[${agentLabel}]: emitError itself failed:`,
             emitErr,
           );
         });
